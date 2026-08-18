@@ -40,7 +40,7 @@ jobs:
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: 52.201.228.103
-          username: root
+          username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             # Authenticate to AWS ECR on EC2
