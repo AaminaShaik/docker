@@ -43,25 +43,30 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Authenticate to AWS ECR on EC2
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+            # Install Docker
+            sudo dnf install -y docker
+            sudo systemctl start docker
+
+            # Authenticate to AWS ECR
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            sudo docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
 
             # Pull the newly pushed image
-            docker pull ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+            sudo docker pull ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
 
-            # Free up port 5001 and remove any existing img1 container
-            docker stop img1 || true
-            docker rm img1 || true
+            # Stop existing container
+            sudo docker stop img1 || true
+            sudo docker rm img1 || true
 
             # Run updated container
-            docker run -d \
+            sudo docker run -d \
               --name img1 \
               --restart unless-stopped \
               -p 5001:5000 \
               ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
 
             # Clean up old dangling images
-            docker image prune -f
+            sudo docker image prune -f
 
             # Verify running container
-            docker ps
+            sudo docker ps
